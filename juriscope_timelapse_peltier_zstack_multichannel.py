@@ -1,24 +1,27 @@
 import socket
-import datetime
-from datetime import timedelta
 import numpy as np
 import time
 import csv
 import pickle
 import os
+import re
+import struct
+from datetime import datetime, timedelta, timezone
+import sys
+
 
 ################################## CHANGE EVERYTHING IN THIS SECTION ######################
 
 load_previous_positions=0 # 1 to load previous positions you have already selected
                           # 0 to choose new positions for samples
 
-main_folder='/home/ahm50/data/18_9_25' # Give the file directory you are saving to
+main_folder='/home/ahm50/data/12_11_25/' # Give the file directory you are saving to
 
 objective=40 # Set either 20 or 40 for which objective is being used
 
-samples=2 #How many wells/capillaries do you have
+samples=1 #How many wells/capillaries do you have
 
-sample_names=['BOH_2u_anch','AOH_BOH_2u_anch']
+sample_names=['brkloh']
 
 z_stack=1# Say if a z stack is being used; 1=yes, 0= not
 timelapse=1 # say if you want time lapse on; 1=yes, 0= not
@@ -26,15 +29,15 @@ timelapse=1 # say if you want time lapse on; 1=yes, 0= not
 auto_focus=1 # Say if you want autofocus ON or OFF
 
 
-z_c_order='cz'  # zc -  In single z-stack, does all channels then moves to next z_stack -- should be faster
+z_c_order='zc'  # zc -  In single z-stack, does all channels then moves to next z_stack -- should be faster
                 # cz -  In single c, does all z_stack and moves to next c --- should be more precise
 
 ##################################### time range
 
-interval=np.array([15,30]) # interval time between imaging cycles in minutes
+interval=np.array([15]) # interval time between imaging cycles in minutes
 
 
-interval_time=np.array([18,30]) #  total time for each interval in min, same order as interval
+interval_time=np.array([20]) #  total time for each interval, same order as interval
 
 interval_time=interval_time*60 # This is for interval_time in hrs.
                                # If using in minutes, comment out.
@@ -54,7 +57,7 @@ heating_time = "0:0:1" # h:m:s
 
 #### Peltier temperature variables
 
-peltier=0 # say if you want peltier on; 1=yes, 0=not
+peltier=1 # say if you want peltier on; 1=yes, 0=not
 
 pelt_start_temp=30
 pelt_end_temp=20
@@ -77,9 +80,12 @@ pelt_wait_time=[4200,30,10,5] # wait time for peltier in minutes.
 ################################## Illumination 
 
 
-illumination=[0x01,0x40,0x20,0x80] # change depending on which channel is being used
-illum_expose=[10000, 100000, 100000, 100000] # change depending on exposure time for each channel
-laser_pwr=[1,1,1,1] # change depending on the laser power wanted, between 0 and 1
+illumination=[0x40,0x20] # change depending on which channel is being used
+illum_expose=[200000, 100000] # change depending on exposure time for each channel
+laser_pwr=[1,1] # change depending on the laser power wanted, between 0 and 1
+
+
+
 
 ##Specify illumination setting
 #first: define the illumination channel that you want to use:
@@ -101,10 +107,10 @@ laser_pwr=[1,1,1,1] # change depending on the laser power wanted, between 0 and 
 
 os.makedirs(main_folder, exist_ok=True)  # creates dircetory if missing
 
+
 movie_output_path=f'{main_folder}/movies'
 
 os.makedirs(movie_output_path, exist_ok=True)  # creates dircetory if missing
-
 
 #assign cama name
 
@@ -162,6 +168,7 @@ illumination_val = {
     0x80: "7",
 }
 
+
 # Translate hex values into wavelengths
 illumination_names = [illumination_map[val] for val in illumination]
 
@@ -177,7 +184,6 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # AF_INET: set address 
 sock.connect((HOST, PORT)) # connect to the host and the port given
 sock.settimeout(120.) #timeout for connection is set at 1 second
 reply = sock.recv(1024)
-
 
 new_pos_save_vec=[]
 
@@ -485,10 +491,11 @@ def script_print_sample(filename, positions, number):
 
                 new_vec=script_get_position()
 
-                new_vec_time=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                new_vec_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
                 new_pos_time=[new_vec_time]+new_vec
                 new_pos_save_vec.append(new_pos_time)
+
                 
                 for step in np.arange(-z_range,z_range +z_step,z_step):
                     script_print_move_z_move(new_vec[2]+step)
@@ -531,7 +538,7 @@ def script_print_sample(filename, positions, number):
 
                 new_vec=script_get_position()
 
-                new_vec_time=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                new_vec_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
                 new_pos_time=[new_vec_time]+new_vec
                 new_pos_save_vec.append(new_pos_time)
@@ -650,8 +657,10 @@ if load_previous_positions==0:
 
         #finalise positions for the current well
         elif key == 'f':
-            number.append(0)
             i += 1
+            if i<samples:
+                number.append(0)
+
             print("p -- Save position\nf -- Finish capillary\n")
 
 
@@ -702,7 +711,7 @@ if z_stack==1:
     
     print(f'zc order: {z_c_order}')
 
-print(f'Peltier = : {'Yes' if peltier else 'No'}')
+print(f'Peltier = : {'Yes' if peltier else 'No'}"')
 
 if peltier==1:
     print(f'Pelt start temp = {pelt_start_temp}')
@@ -1109,6 +1118,7 @@ with open(f"{main_folder}/timestamp.csv", mode="w", newline="") as file:
         writer.writerow([item])  # each item on a new row
 
 print(f"timestamp export complete")
+
 
 with open(f"{main_folder}/pos.csv", "w", newline="") as csvfile:
     writer = csv.writer(csvfile)
