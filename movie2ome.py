@@ -521,7 +521,7 @@ for sample_idx in range(len(sample_names)):
             for ci,c in enumerate(c_per_num): # for number of channels in sample
                 c_dicts=[d for d in num_dicts if d.get('illum_wavelength')==c] # takes only a specific channel from the sample
                 
-                z_per_c=sorted({int(d['z']) for d in c_dicts if 'z' in d})
+                z_per_c=sorted({float(d['z']) for d in c_dicts if 'z' in d})
                 
                 for zi,z in enumerate(z_per_c): # for number of z_stacks in channel
                     z_dicts=[d for d in c_dicts if d.get('z')==str(z)]

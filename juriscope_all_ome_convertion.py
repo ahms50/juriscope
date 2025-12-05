@@ -14,16 +14,16 @@ import sys
 
 ################################## CHANGE EVERYTHING IN THIS SECTION ######################
 
-load_previous_positions=0 # 1 to load previous positions you have already selected
+load_previous_positions=1 # 1 to load previous positions you have already selected
                           # 0 to choose new positions for samples
 
-main_folder='/home/ahm50/data/12_11_25/' # Give the file directory you are saving to
+main_folder='/home/ahm50/data/4_12_25/' # Give the file directory you are saving to
 
 objective=40 # Set either 20 or 40 for which objective is being used
 
 samples=1 #How many wells/capillaries do you have
 
-sample_names=['brkloh']
+sample_names=['Melting_in_GUV']
 
 z_stack=1# Say if a z stack is being used; 1=yes, 0= not
 timelapse=1 # say if you want time lapse on; 1=yes, 0= not
@@ -36,19 +36,19 @@ z_c_order='zc'  # zc -  In single z-stack, does all channels then moves to next 
 
 ##################################### time range
 
-interval=np.array([15]) # interval time between imaging cycles in minutes
+interval=np.array([5]) # interval time between imaging cycles in minutes
 
 
-interval_time=np.array([20]) #  total time for each interval, same order as interval
+interval_time=np.array([1000]) #  total time for each interval, same order as interval
 
-interval_time=interval_time*60 # This is for interval_time in hrs.
+#interval_time=interval_time*60 # This is for interval_time in hrs.
                                # If using in minutes, comment out.
 
 ## Further intervals can be added
 
 ################################### z step range
-z_range=3 # +- this number, e.g. if it is 20, it is -20Âµm to +20 Âµm
-z_step=1 # step size between z range, i.e. if z_range is 20 and z_step is 1, you would have 41 slices
+z_range=5 # +- this number, e.g. if it is 20, it is -20Âµm to +20 Âµm
+z_step=0.5 # step size between z range, i.e. if z_range is 20 and z_step is 1, you would have 41 slices
 
 ## Temperature and heating time
 
@@ -61,9 +61,9 @@ heating_time = "0:0:1" # h:m:s
 
 peltier=1 # say if you want peltier on; 1=yes, 0=not
 
-pelt_start_temp=30
-pelt_end_temp=20
-pelt_step=-1
+pelt_start_temp=25
+pelt_end_temp=65
+pelt_step=0.2
 
 pelt_initial_heat_time=30 # how long the initial heating of the first temp lasts for before imaging begins in seconds
 
@@ -71,11 +71,11 @@ pelt_return=1 # Set: 0 -> Only goes from pelt_start_temp to pelt_end_temp in pel
               #      1 -> Goes from pelt_start_temp to pelt_end_temp and goes back to pelt_start_temp in pelt_step
 
 
-pelt_time_temp_threshold=[29,28,27] # Cutoff temperature where the pelt_wait_time moves to the next wait time sequence
+pelt_time_temp_threshold=[] # Cutoff temperature where the pelt_wait_time moves to the next wait time sequence
                                     # if only singular heating time interval used, let this be: []
                                     
-pelt_wait_time=[4200,30,10,5] # wait time for peltier in minutes. 
-                              # SHOULD BE: length should be: len(pelt_time_temp_threshold) +1
+pelt_wait_time=[5] # wait time for peltier in minutes. 
+                              # SHOULD BE: length sshould be: len(pelt_time_temp_threshold) +1
                               # if only singular heating time interval, should only be 1 interval number and not list
 
 
@@ -83,15 +83,16 @@ pelt_wait_time=[4200,30,10,5] # wait time for peltier in minutes.
 
 
 illumination=[0x40,0x20] # change depending on which channel is being used
-illum_expose=[200000, 100000] # change depending on exposure time for each channel
+illum_expose=[500000, 500000] # change depending on exposure time for each channel
 laser_pwr=[1,1] # change depending on the laser power wanted, between 0 and 1
 
 
 # remember to not have a comma for the last one
 user_channel_colors = {
     0: "#FFFFFFFF", # white for greyscale
-    1: "#FFFF00FF"
-    #2: "#00FFFFFF",
+    1: "#00FFFFFF",
+    2: "#FFFF00FF"
+    
     #3: "#FF0000FF"    
 }
 
@@ -134,8 +135,8 @@ elif objective==40:
 if pelt_return==0:
     pelt_temp_list=list(range(pelt_start_temp, pelt_end_temp - 1, pelt_step))
 elif pelt_return==1:
-    pelt_up=list(range(pelt_start_temp, pelt_end_temp - 1, pelt_step))
-    pelt_down=list(range( pelt_end_temp, pelt_start_temp - 1, -pelt_step))
+    pelt_up=list(np.round(np.arange(pelt_start_temp, pelt_end_temp - 1, pelt_step),2))
+    pelt_down=list(np.round(np.arange( pelt_end_temp, pelt_start_temp - 1, -pelt_step),2))
     pelt_temp_list = pelt_up + pelt_down
 
 
@@ -727,7 +728,7 @@ if peltier==1:
     print(f'Pelt end temp = {pelt_end_temp}')
     print(f'Pelt temp step = {pelt_step}')
     
-    print(f'Pelt temp array = {pelt_temp_list}')
+    print('Pelt temp array =', [f'{x:.2f}' for x in pelt_temp_list])
     print(f'Cut-off temperatures for waiting are: {pelt_time_temp_threshold}')
     print(f'Interval time per cut-off temperature range: {pelt_wait_time}')
     
@@ -1067,7 +1068,7 @@ for sample_idx in range(len(sample_names)):
 
             
                 for num in range(1, number[sample_idx] + 1):
-                    for zi in range (-z_range, z_range+1,z_step):
+                    for zi in np.arange(-z_range,z_range +z_step,z_step):
                         for il in range(len(illumination)):
                             frame_sequence.append({
                                 "frame": frame_seq_id,
@@ -1085,7 +1086,7 @@ for sample_idx in range(len(sample_names)):
 
                 for num in range(1, number[sample_idx] + 1):
                     for il in range(len(illumination)):
-                        for zi in range (-z_range, z_range+1,z_step):                
+                        for zi in np.arange(-z_range,z_range +z_step,z_step):                
                             frame_sequence.append({
                                 "frame": frame_seq_id,
                                 "sample": sample_names[sample_idx],
@@ -1278,17 +1279,30 @@ class OMEWriter:
 
         # Build Planes
         planes = []
-        for t in range(T):
-            for c in range(C):
-                for z in range(Z):
-                    planes.append(
-                        Plane(
-                            the_t=t,
-                            the_c=c,
-                            the_z=z,
-                            delta_t=float(timestamp_list[t])
+
+        if timelapse==1:
+            for t in range(T):
+                for c in range(C):
+                    for z in range(Z):
+                        planes.append(
+                            Plane(
+                                the_t=t,
+                                the_c=c,
+                                the_z=z,
+                                delta_t=float(timestamp_list[t])
+                            )
                         )
-                    )
+        else:
+            for t in range(T):
+                for c in range(C):
+                    for z in range(Z):
+                        planes.append(
+                            Plane(
+                                the_t=t,
+                                the_c=c,
+                                the_z=z
+                            )
+                        )
 
         pixels = Pixels(
             dimension_order="XYZCT",
@@ -1432,9 +1446,11 @@ for sample_idx in range(len(sample_names)):
 
         timestamp_list = []
 
-        for ti, file in enumerate(grouped_files[sample_names[sample_idx]]):
-            # Extract timestamp from filename
-            timestamp_list.append(int(re.search(r'_timestamp_(\d+)_', file).group(1)))
+        if timelapse==1:
+
+            for ti, file in enumerate(grouped_files[sample_names[sample_idx]]):
+                # Extract timestamp from filename
+                timestamp_list.append(int(re.search(r'_timestamp_(\d+)_', file).group(1)))
 
 
         # --- Create writer ---
@@ -1469,7 +1485,7 @@ for sample_idx in range(len(sample_names)):
             for ci,c in enumerate(c_per_num): # for number of channels in sample
                 c_dicts=[d for d in num_dicts if d.get('illum_wavelength')==c] # takes only a specific channel from the sample
                 
-                z_per_c=sorted({int(d['z']) for d in c_dicts if 'z' in d})
+                z_per_c=sorted({float(d['z']) for d in c_dicts if 'z' in d})
                 
                 for zi,z in enumerate(z_per_c): # for number of z_stacks in channel
                     z_dicts=[d for d in c_dicts if d.get('z')==str(z)]
