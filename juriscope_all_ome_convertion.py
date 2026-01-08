@@ -14,16 +14,16 @@ import sys
 
 ################################## CHANGE EVERYTHING IN THIS SECTION ######################
 
-load_previous_positions=1 # 1 to load previous positions you have already selected
+load_previous_positions=0 # 1 to load previous positions you have already selected
                           # 0 to choose new positions for samples
 
-main_folder='/home/ahm50/data/4_12_25/' # Give the file directory you are saving to
+main_folder='/home/ahm50/data/8_1_26/' # Give the file directory you are saving to
 
 objective=40 # Set either 20 or 40 for which objective is being used
 
 samples=1 #How many wells/capillaries do you have
 
-sample_names=['Melting_in_GUV']
+sample_names=['Melting_GUV_no_anch','Melting_GUV_2uM_anch','Melting_Bulk_no_anch','Melting_Bulk_2uM_anch']
 
 z_stack=1# Say if a z stack is being used; 1=yes, 0= not
 timelapse=1 # say if you want time lapse on; 1=yes, 0= not
@@ -39,7 +39,7 @@ z_c_order='zc'  # zc -  In single z-stack, does all channels then moves to next 
 interval=np.array([5]) # interval time between imaging cycles in minutes
 
 
-interval_time=np.array([1000]) #  total time for each interval, same order as interval
+interval_time=np.array([2000]) #  total time for each interval, same order as interval
 
 #interval_time=interval_time*60 # This is for interval_time in hrs.
                                # If using in minutes, comment out.
@@ -61,8 +61,8 @@ heating_time = "0:0:1" # h:m:s
 
 peltier=1 # say if you want peltier on; 1=yes, 0=not
 
-pelt_start_temp=25
-pelt_end_temp=65
+pelt_start_temp=30
+pelt_end_temp=55
 pelt_step=0.2
 
 pelt_initial_heat_time=30 # how long the initial heating of the first temp lasts for before imaging begins in seconds
@@ -89,9 +89,9 @@ laser_pwr=[1,1] # change depending on the laser power wanted, between 0 and 1
 
 # remember to not have a comma for the last one
 user_channel_colors = {
-    0: "#FFFFFFFF", # white for greyscale
-    1: "#00FFFFFF",
-    2: "#FFFF00FF"
+    #0: "#FFFFFFFF", # white for greyscale
+    0: "#00FFFFFF",
+    1: "#FFFF00FF"
     
     #3: "#FF0000FF"    
 }

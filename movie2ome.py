@@ -19,13 +19,13 @@ import sys
 load_previous_positions=1 # 1 to load previous positions you have already selected
                           # 0 to choose new positions for samples
 
-main_folder='C:/Users/ahm50/Documents/juriscope_trials' # Give the file directory you are saving to
+main_folder='/home/ahm50/data/4_12_25/' # Give the file directory you are saving to
 
 objective=40 # Set either 20 or 40 for which objective is being used
 
-samples=2 #How many wells/capillaries do you have
+samples=1 #How many wells/capillaries do you have
 
-sample_names=['A_BOH_2u_anch,BOH_2u_anch']
+sample_names=['Melting_in_GUV']
 
 z_stack=1# Say if a z stack is being used; 1=yes, 0= not
 timelapse=1 # say if you want time lapse on; 1=yes, 0= not
@@ -38,19 +38,19 @@ z_c_order='zc'  # zc -  In single z-stack, does all channels then moves to next 
 
 ##################################### time range
 
-interval=np.array([15]) # interval time between imaging cycles in minutes
+interval=np.array([5]) # interval time between imaging cycles in minutes
 
 
-interval_time=np.array([20]) #  total time for each interval, same order as interval
+interval_time=np.array([1000]) #  total time for each interval, same order as interval
 
-interval_time=interval_time*60 # This is for interval_time in hrs.
+#interval_time=interval_time*60 # This is for interval_time in hrs.
                                # If using in minutes, comment out.
 
 ## Further intervals can be added
 
 ################################### z step range
-z_range=3 # +- this number, e.g. if it is 20, it is -20Âµm to +20 Âµm
-z_step=1 # step size between z range, i.e. if z_range is 20 and z_step is 1, you would have 41 slices
+z_range=5 # +- this number, e.g. if it is 20, it is -20Âµm to +20 Âµm
+z_step=0.5 # step size between z range, i.e. if z_range is 20 and z_step is 1, you would have 41 slices
 
 ## Temperature and heating time
 
@@ -63,9 +63,9 @@ heating_time = "0:0:1" # h:m:s
 
 peltier=1 # say if you want peltier on; 1=yes, 0=not
 
-pelt_start_temp=30
-pelt_end_temp=20
-pelt_step=-1
+pelt_start_temp=25
+pelt_end_temp=65
+pelt_step=0.2
 
 pelt_initial_heat_time=30 # how long the initial heating of the first temp lasts for before imaging begins in seconds
 
@@ -73,11 +73,11 @@ pelt_return=1 # Set: 0 -> Only goes from pelt_start_temp to pelt_end_temp in pel
               #      1 -> Goes from pelt_start_temp to pelt_end_temp and goes back to pelt_start_temp in pelt_step
 
 
-pelt_time_temp_threshold=[29,28,27] # Cutoff temperature where the pelt_wait_time moves to the next wait time sequence
+pelt_time_temp_threshold=[] # Cutoff temperature where the pelt_wait_time moves to the next wait time sequence
                                     # if only singular heating time interval used, let this be: []
                                     
-pelt_wait_time=[4200,30,10,5] # wait time for peltier in minutes. 
-                              # SHOULD BE: length should be: len(pelt_time_temp_threshold) +1
+pelt_wait_time=[5] # wait time for peltier in minutes. 
+                              # SHOULD BE: length sshould be: len(pelt_time_temp_threshold) +1
                               # if only singular heating time interval, should only be 1 interval number and not list
 
 
@@ -85,8 +85,9 @@ pelt_wait_time=[4200,30,10,5] # wait time for peltier in minutes.
 
 
 illumination=[0x40,0x20] # change depending on which channel is being used
-illum_expose=[200000, 100000] # change depending on exposure time for each channel
+illum_expose=[500000, 500000] # change depending on exposure time for each channel
 laser_pwr=[1,1] # change depending on the laser power wanted, between 0 and 1
+
 
 ##Specify illumination setting
 #first: define the illumination channel that you want to use:
@@ -132,8 +133,8 @@ elif objective==40:
 if pelt_return==0:
     pelt_temp_list=list(range(pelt_start_temp, pelt_end_temp - 1, pelt_step))
 elif pelt_return==1:
-    pelt_up=list(range(pelt_start_temp, pelt_end_temp - 1, pelt_step))
-    pelt_down=list(range( pelt_end_temp, pelt_start_temp - 1, -pelt_step))
+    pelt_up=list(np.round(np.arange(pelt_start_temp, pelt_end_temp - 1, pelt_step),2))
+    pelt_down=list(np.round(np.arange( pelt_end_temp, pelt_start_temp - 1, -pelt_step),2))
     pelt_temp_list = pelt_up + pelt_down
 
 
@@ -148,6 +149,7 @@ for temp in pelt_temp_list:
     else:
         # If no threshold matched (i.e., temp <= all thresholds)
         pelt_wait_schedule.append(pelt_wait_time[-1])
+        
         
 ########### Name mapping for illumination
 
@@ -188,7 +190,7 @@ illumination_names = [illumination_map[val] for val in illumination]
 movie_folder_path=movie_output_path
 
 
-output_path=f'{main_folder}/tiffs'
+output_path=f'{main_folder}/tiffs2'
 
 os.makedirs(output_path, exist_ok=True)  # creates dircetory if missing
 
@@ -197,10 +199,10 @@ os.makedirs(output_path, exist_ok=True)  # creates dircetory if missing
 compression_type = "raw"  # or "tiff_lzw" for lossless compression or "raw" for no compresison
 
 user_channel_colors = {
-    0: "#FFFFFFFF", # white for greyscale
-    1: "#FFFF00FF",  
-    2: "#00FFFFFF", 
-    3: "#FF0000FF"    
+    #0: "#FFFFFFFF", # white for greyscale
+    0: "#00FFFFFF", 
+    1: "#FFFF00FF"  
+    #3: "#FF0000FF"    
 }
 
 
