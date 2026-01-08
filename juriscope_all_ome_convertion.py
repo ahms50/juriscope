@@ -17,13 +17,13 @@ import sys
 load_previous_positions=0 # 1 to load previous positions you have already selected
                           # 0 to choose new positions for samples
 
-main_folder='/home/ahm50/data/8_1_26/' # Give the file directory you are saving to
+main_folder='/home/ahm50/data/12_12_25/' # Give the file directory you are saving to
 
 objective=40 # Set either 20 or 40 for which objective is being used
 
 samples=1 #How many wells/capillaries do you have
 
-sample_names=['Melting_GUV_no_anch','Melting_GUV_2uM_anch','Melting_Bulk_no_anch','Melting_Bulk_2uM_anch']
+sample_names=['Melting_in_GUV_2']
 
 z_stack=1# Say if a z stack is being used; 1=yes, 0= not
 timelapse=1 # say if you want time lapse on; 1=yes, 0= not
@@ -39,7 +39,7 @@ z_c_order='zc'  # zc -  In single z-stack, does all channels then moves to next 
 interval=np.array([5]) # interval time between imaging cycles in minutes
 
 
-interval_time=np.array([2000]) #  total time for each interval, same order as interval
+interval_time=np.array([1000]) #  total time for each interval, same order as interval
 
 #interval_time=interval_time*60 # This is for interval_time in hrs.
                                # If using in minutes, comment out.
