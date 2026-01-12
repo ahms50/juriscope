@@ -15,22 +15,22 @@ import sys
 
 
 ################################## CHANGE EVERYTHING IN THIS SECTION ######################
-
+make_frame_mapping=0
 load_previous_positions=1 # 1 to load previous positions you have already selected
                           # 0 to choose new positions for samples
 
-main_folder='/home/ahm50/data/4_12_25/' # Give the file directory you are saving to
+main_folder='/home/ahm50/data/8_1_26' # Give the file directory you are saving to
 
 objective=40 # Set either 20 or 40 for which objective is being used
 
-samples=1 #How many wells/capillaries do you have
+samples=2 #How many wells/capillaries do you have
 
-sample_names=['Melting_in_GUV']
+sample_names=['Melting_Bulk_no_anch','Melting_Bulk_2uM_anch']
 
 z_stack=1# Say if a z stack is being used; 1=yes, 0= not
 timelapse=1 # say if you want time lapse on; 1=yes, 0= not
 
-auto_focus=1 # Say if you want autofocus ON or OFF
+auto_focus=0 # Say if you want autofocus ON or OFF
 
 
 z_c_order='zc'  # zc -  In single z-stack, does all channels then moves to next z_stack -- should be faster
@@ -41,7 +41,7 @@ z_c_order='zc'  # zc -  In single z-stack, does all channels then moves to next 
 interval=np.array([5]) # interval time between imaging cycles in minutes
 
 
-interval_time=np.array([1000]) #  total time for each interval, same order as interval
+interval_time=np.array([1500]) #  total time for each interval, same order as interval
 
 #interval_time=interval_time*60 # This is for interval_time in hrs.
                                # If using in minutes, comment out.
@@ -49,8 +49,8 @@ interval_time=np.array([1000]) #  total time for each interval, same order as in
 ## Further intervals can be added
 
 ################################### z step range
-z_range=5 # +- this number, e.g. if it is 20, it is -20Âµm to +20 Âµm
-z_step=0.5 # step size between z range, i.e. if z_range is 20 and z_step is 1, you would have 41 slices
+z_range=10 # +- this number, e.g. if it is 20, it is -20Âµm to +20 Âµm
+z_step=2 # step size between z range, i.e. if z_range is 20 and z_step is 1, you would have 41 slices
 
 ## Temperature and heating time
 
@@ -64,7 +64,7 @@ heating_time = "0:0:1" # h:m:s
 peltier=1 # say if you want peltier on; 1=yes, 0=not
 
 pelt_start_temp=25
-pelt_end_temp=65
+pelt_end_temp=55
 pelt_step=0.2
 
 pelt_initial_heat_time=30 # how long the initial heating of the first temp lasts for before imaging begins in seconds
@@ -84,21 +84,21 @@ pelt_wait_time=[5] # wait time for peltier in minutes.
 ################################## Illumination 
 
 
-illumination=[0x40,0x20] # change depending on which channel is being used
-illum_expose=[500000, 500000] # change depending on exposure time for each channel
-laser_pwr=[1,1] # change depending on the laser power wanted, between 0 and 1
+illumination=[0x20] # change depending on which channel is being used
+illum_expose=[10000] # change depending on exposure time for each channel
+laser_pwr=[1] # change depending on the laser power wanted, between 0 and 1
 
 
-##Specify illumination setting
-#first: define the illumination channel that you want to use:
-#ch postion 1: BF 475 nm: 0 bit value , Hex value: 0x01
-#ch postion 2: BF 528 nm: 2 bit value, Hex value: 0x02
-#ch postion 3: BF 625 nm: 4 bit value, Hex value: 0x04
-#ch postion 4: BF 655 nm: 8 bit value, Hex value: 0x08
-#ch postion 5: Fluo 385 nm: 16 bit value, Hex value: 0x10
-#ch postion 6: Fluo 475 nm: 32 bit value, Hex value: 0x20  --- error in microscope so turns on both 475 and 528 on the 40x
-#ch postion 7: Fluo 528 nm: 64 bit value, Hex value: 0x40
-#ch postion 8: Fluo 625 nm: 128 bit value, Hex value: 0x80
+# remember to not have a comma for the last one
+user_channel_colors = {
+    #0: "#FFFFFFFF", # white for greyscale
+    0: "#00FFFFFF"
+    #1: "#FFFF00FF"
+    
+    #3: "#FF0000FF"    
+}
+###################################### END OF USER SET PARAMETERS #################################################
+timestamp=[]
 
 
 if load_previous_positions==1:
@@ -107,8 +107,78 @@ if load_previous_positions==1:
         number, positions = pickle.load(f)
         print("Loaded data:", number, positions)
 
-###################################### END OF USER SET PARAMETERS #################################################
+### Create dictionary to find what each frame in each movie corresponds to
+for sample_idx in range(len(sample_names)):
+    # Build frame mapping
+    frame_sequence = []
+    frame_seq_id = 1
 
+    if z_stack == 1:
+
+        if z_c_order == 'zc':
+
+            
+                for num in range(1, number[sample_idx] + 1):
+                    for zi in np.arange(-z_range,z_range +z_step,z_step):
+                        for il in range(len(illumination)):
+                            frame_sequence.append({
+                                "frame": frame_seq_id,
+                                "sample": sample_names[sample_idx],
+                                "number": num,
+                                "z": float(zi),
+                                "illum_wavelength": illumination[il],
+                                "illum_exposure_time": illum_expose[il],
+                                "illum_pwr": laser_pwr[il]
+                            })
+                            frame_seq_id += 1
+
+        elif z_c_order == 'cz':
+
+
+                for num in range(1, number[sample_idx] + 1):
+                    for il in range(len(illumination)):
+                        for zi in np.arange(-z_range,z_range +z_step,z_step):                
+                            frame_sequence.append({
+                                "frame": frame_seq_id,
+                                "sample": sample_names[sample_idx],
+                                "number": num,
+                                "z": float(zi),
+                                "illum_wavelength": illumination[il],
+                                "illum_exposure_time": illum_expose[il],
+                                "illum_pwr": laser_pwr[il]
+                            })
+
+                            frame_seq_id += 1
+    elif z_stack == 0:
+        for num in range(1, number[sample_idx] + 1):
+            for il in range(len(illumination)):              
+                frame_sequence.append({
+                    "frame": frame_seq_id,
+                    "sample": sample_names[sample_idx],
+                    "number": num,
+                    "z": 1.0,
+                    "illum_wavelength": illumination[il],
+                    "illum_exposure_time": illum_expose[il],
+                    "illum_pwr": laser_pwr[il]
+                })
+
+                frame_seq_id += 1
+
+    csv_file = f"{main_folder}/frame_mapping_{sample_idx}.csv"
+    with open(csv_file, mode="w", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=["frame", "sample", "number", "z", "illum_wavelength", "illum_exposure_time", "illum_pwr"])
+        writer.writeheader()
+        for f in frame_sequence:
+            writer.writerow(f)
+
+    print(f"Frame mapping export complete")
+
+with open(f"{main_folder}/timestamp.csv", mode="w", newline="") as file:
+    writer = csv.writer(file)
+    for item in timestamp:
+        writer.writerow([item])  # each item on a new row
+
+print(f"timestamp export complete")
 
 
 #################################### Initialisation
@@ -120,36 +190,6 @@ movie_output_path=f'{main_folder}/movies'
 
 os.makedirs(movie_output_path, exist_ok=True)  # creates dircetory if missing
 
-#assign cama name
-
-if objective==20:
-    camera_name = "Genicam FLIR Blackfly S BFS-U3-70S7M 0159F410" # 20x
-elif objective==40:
-    camera_name = "Genicam FLIR Blackfly S BFS-U3-70S7M 0159F411" #40x
-
-
-########### Set peltier array
-
-if pelt_return==0:
-    pelt_temp_list=list(range(pelt_start_temp, pelt_end_temp - 1, pelt_step))
-elif pelt_return==1:
-    pelt_up=list(np.round(np.arange(pelt_start_temp, pelt_end_temp - 1, pelt_step),2))
-    pelt_down=list(np.round(np.arange( pelt_end_temp, pelt_start_temp - 1, -pelt_step),2))
-    pelt_temp_list = pelt_up + pelt_down
-
-
-assert len(pelt_wait_time) == len(pelt_time_temp_threshold) + 1 # check if pelt wait time matches threshold
-
-pelt_wait_schedule = []
-for temp in pelt_temp_list:
-    for i, threshold in enumerate(pelt_time_temp_threshold):
-        if temp > threshold:
-            pelt_wait_schedule.append(pelt_wait_time[i])
-            break
-    else:
-        # If no threshold matched (i.e., temp <= all thresholds)
-        pelt_wait_schedule.append(pelt_wait_time[-1])
-        
         
 ########### Name mapping for illumination
 
@@ -190,7 +230,7 @@ illumination_names = [illumination_map[val] for val in illumination]
 movie_folder_path=movie_output_path
 
 
-output_path=f'{main_folder}/tiffs2'
+output_path=f'{main_folder}/tiffs'
 
 os.makedirs(output_path, exist_ok=True)  # creates dircetory if missing
 
@@ -198,12 +238,10 @@ os.makedirs(output_path, exist_ok=True)  # creates dircetory if missing
 
 compression_type = "raw"  # or "tiff_lzw" for lossless compression or "raw" for no compresison
 
-user_channel_colors = {
-    #0: "#FFFFFFFF", # white for greyscale
-    0: "#00FFFFFF", 
-    1: "#FFFF00FF"  
-    #3: "#FF0000FF"    
-}
+
+
+################################## variables and functions for movie2tiff conversions #################################
+
 
 
 ################################## variables and functions for movie2tiff conversions #################################
@@ -291,7 +329,6 @@ def iterate_frames(data):
 ################################## Functions for ome.tiff conversion ####################
 
 
-
 # -----------------------
 # OMEWriter class 
 # -----------------------
@@ -332,17 +369,30 @@ class OMEWriter:
 
         # Build Planes
         planes = []
-        for t in range(T):
-            for c in range(C):
-                for z in range(Z):
-                    planes.append(
-                        Plane(
-                            the_t=t,
-                            the_c=c,
-                            the_z=z,
-                            delta_t=float(timestamp_list[t])
+
+        if timelapse==1:
+            for t in range(T):
+                for c in range(C):
+                    for z in range(Z):
+                        planes.append(
+                            Plane(
+                                the_t=t,
+                                the_c=c,
+                                the_z=z,
+                                delta_t=float(timestamp_list[t])
+                            )
                         )
-                    )
+        else:
+            for t in range(T):
+                for c in range(C):
+                    for z in range(Z):
+                        planes.append(
+                            Plane(
+                                the_t=t,
+                                the_c=c,
+                                the_z=z
+                            )
+                        )
 
         pixels = Pixels(
             dimension_order="XYZCT",
@@ -486,9 +536,11 @@ for sample_idx in range(len(sample_names)):
 
         timestamp_list = []
 
-        for ti, file in enumerate(grouped_files[sample_names[sample_idx]]):
-            # Extract timestamp from filename
-            timestamp_list.append(int(re.search(r'_timestamp_(\d+)_', file).group(1)))
+        if timelapse==1:
+
+            for ti, file in enumerate(grouped_files[sample_names[sample_idx]]):
+                # Extract timestamp from filename
+                timestamp_list.append(int(re.search(r'_timestamp_(\d+)_', file).group(1)))
 
 
         # --- Create writer ---
@@ -510,6 +562,7 @@ for sample_idx in range(len(sample_names)):
             timestamp_list.append(int(re.search(r'_timestamp_(\d+)_', file).group(1))) 
             
             frames=list(iterate_frames(data)) # creates a list of all frames from data
+
             n_frames=len(frames) # finds the number of frames
 
             if n_frames == 0:
@@ -527,10 +580,10 @@ for sample_idx in range(len(sample_names)):
                 
                 for zi,z in enumerate(z_per_c): # for number of z_stacks in channel
                     z_dicts=[d for d in c_dicts if d.get('z')==str(z)]
-                    
+
                     frame=set(d.get('frame') for d in z_dicts if 'frame' in d)
                     frame = int(list(frame)[0])
-
+                    
                     if len(all_data[sample_idx]) + 1 == n_frames: # if statement as sometimes 1st frame is incorrect for use
                         frame_idx=frame+1
                     elif len(all_data[sample_idx]) == n_frames:
@@ -566,4 +619,3 @@ for sample_idx in range(len(sample_names)):
                     
 
 print('Conversion to tiff complete')
-

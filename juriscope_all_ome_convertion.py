@@ -14,21 +14,21 @@ import sys
 
 ################################## CHANGE EVERYTHING IN THIS SECTION ######################
 
-load_previous_positions=0 # 1 to load previous positions you have already selected
+load_previous_positions=1 # 1 to load previous positions you have already selected
                           # 0 to choose new positions for samples
 
 main_folder='/home/ahm50/data/8_1_26/' # Give the file directory you are saving to
 
 objective=40 # Set either 20 or 40 for which objective is being used
 
-samples=1 #How many wells/capillaries do you have
+samples=2 #How many wells/capillaries do you have
 
-sample_names=['Melting_GUV_no_anch','Melting_GUV_2uM_anch','Melting_Bulk_no_anch','Melting_Bulk_2uM_anch']
+sample_names=['Melting_Bulk_no_anch','Melting_Bulk_2uM_anch']
 
 z_stack=1# Say if a z stack is being used; 1=yes, 0= not
 timelapse=1 # say if you want time lapse on; 1=yes, 0= not
 
-auto_focus=1 # Say if you want autofocus ON or OFF
+auto_focus=0 # Say if you want autofocus ON or OFF
 
 
 z_c_order='zc'  # zc -  In single z-stack, does all channels then moves to next z_stack -- should be faster
@@ -47,8 +47,8 @@ interval_time=np.array([1500]) #  total time for each interval, same order as in
 ## Further intervals can be added
 
 ################################### z step range
-z_range=5 # +- this number, e.g. if it is 20, it is -20Âµm to +20 Âµm
-z_step=0.5 # step size between z range, i.e. if z_range is 20 and z_step is 1, you would have 41 slices
+z_range=10 # +- this number, e.g. if it is 20, it is -20Âµm to +20 Âµm
+z_step=2 # step size between z range, i.e. if z_range is 20 and z_step is 1, you would have 41 slices
 
 ## Temperature and heating time
 
@@ -82,16 +82,16 @@ pelt_wait_time=[5] # wait time for peltier in minutes.
 ################################## Illumination 
 
 
-illumination=[0x40,0x20] # change depending on which channel is being used
-illum_expose=[500000, 500000] # change depending on exposure time for each channel
-laser_pwr=[1,1] # change depending on the laser power wanted, between 0 and 1
+illumination=[0x20] # change depending on which channel is being used
+illum_expose=[10000] # change depending on exposure time for each channel
+laser_pwr=[1] # change depending on the laser power wanted, between 0 and 1
 
 
 # remember to not have a comma for the last one
 user_channel_colors = {
     #0: "#FFFFFFFF", # white for greyscale
-    0: "#00FFFFFF",
-    1: "#FFFF00FF"
+    0: "#00FFFFFF"
+    #1: "#FFFF00FF"
     
     #3: "#FF0000FF"    
 }
@@ -1074,7 +1074,7 @@ for sample_idx in range(len(sample_names)):
                                 "frame": frame_seq_id,
                                 "sample": sample_names[sample_idx],
                                 "number": num,
-                                "z": zi,
+                                "z": float(zi),
                                 "illum_wavelength": illumination[il],
                                 "illum_exposure_time": illum_expose[il],
                                 "illum_pwr": laser_pwr[il]
@@ -1091,7 +1091,7 @@ for sample_idx in range(len(sample_names)):
                                 "frame": frame_seq_id,
                                 "sample": sample_names[sample_idx],
                                 "number": num,
-                                "z": zi,
+                                "z": float(zi),
                                 "illum_wavelength": illumination[il],
                                 "illum_exposure_time": illum_expose[il],
                                 "illum_pwr": laser_pwr[il]
@@ -1105,7 +1105,7 @@ for sample_idx in range(len(sample_names)):
                     "frame": frame_seq_id,
                     "sample": sample_names[sample_idx],
                     "number": num,
-                    "z": 1,
+                    "z": 1.0,
                     "illum_wavelength": illumination[il],
                     "illum_exposure_time": illum_expose[il],
                     "illum_pwr": laser_pwr[il]
