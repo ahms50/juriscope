@@ -1435,7 +1435,11 @@ for sample_idx in range(len(sample_names)):
     for num in num_pos:  # for number of samples in the movie files
 
         num_dicts = [d for d in all_data[sample_idx] if d.get('number')==num] # takes only a specific number from the sample
-        c_per_num=sorted(set(d.get('illum_wavelength') for d in num_dicts if 'illum_wavelength' in d)) # find number of channels per sample
+        c_per_num=[
+            str(c) for c in sorted(
+                {int(d['illum_wavelength']) for d in num_dicts if 'illum_wavelength' in d}
+            )
+        ]
 
         Y, X = 2200, 3208
 
