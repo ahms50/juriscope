@@ -12,23 +12,24 @@ from ome_types.model import OME, Image, Pixels, Channel, Plane
 import sys
 
 
+
 ################################## CHANGE EVERYTHING IN THIS SECTION ######################
 
-load_previous_positions=1 # 1 to load previous positions you have already selected
+load_previous_positions=0 # 1 to load previous positions you have already selected
                           # 0 to choose new positions for samples
 
-main_folder='/home/ahm50/data/8_1_26/' # Give the file directory you are saving to
+main_folder='/home/ahm50/data/19_1_26/' # Give the file directory you are saving to
 
 objective=40 # Set either 20 or 40 for which objective is being used
 
 samples=2 #How many wells/capillaries do you have
 
-sample_names=['Melting_Bulk_no_anch','Melting_Bulk_2uM_anch']
+sample_names=['Melting_GUV_no_anch','Melting_GUV_2uM_anch']
 
 z_stack=1# Say if a z stack is being used; 1=yes, 0= not
 timelapse=1 # say if you want time lapse on; 1=yes, 0= not
 
-auto_focus=0 # Say if you want autofocus ON or OFF
+auto_focus=1 # Say if you want autofocus ON or OFF
 
 
 z_c_order='zc'  # zc -  In single z-stack, does all channels then moves to next z_stack -- should be faster
@@ -82,16 +83,16 @@ pelt_wait_time=[5] # wait time for peltier in minutes.
 ################################## Illumination 
 
 
-illumination=[0x20] # change depending on which channel is being used
-illum_expose=[10000] # change depending on exposure time for each channel
-laser_pwr=[1] # change depending on the laser power wanted, between 0 and 1
+illumination=[0x20,0x40] # change depending on which channel is being used
+illum_expose=[10000,499997] # change depending on exposure time for each channel
+laser_pwr=[0.3,1] # change depending on the laser power wanted, between 0 and 1
 
 
 # remember to not have a comma for the last one
 user_channel_colors = {
     #0: "#FFFFFFFF", # white for greyscale
-    0: "#00FFFFFF"
-    #1: "#FFFF00FF"
+    0: "#00FFFFFF",
+    1: "#FFFF00FF"
     
     #3: "#FF0000FF"    
 }
@@ -135,10 +136,9 @@ elif objective==40:
 if pelt_return==0:
     pelt_temp_list=list(range(pelt_start_temp, pelt_end_temp - 1, pelt_step))
 elif pelt_return==1:
-    pelt_up=list(np.round(np.arange(pelt_start_temp, pelt_end_temp - 1, pelt_step),2))
-    pelt_down=list(np.round(np.arange( pelt_end_temp, pelt_start_temp - 1, -pelt_step),2))
+    pelt_up=list(np.round(np.arange(pelt_start_temp, pelt_end_temp , pelt_step),2))
+    pelt_down=list(np.round(np.arange( pelt_end_temp, pelt_start_temp - pelt_step, -pelt_step),2))
     pelt_temp_list = pelt_up + pelt_down
-
 
 assert len(pelt_wait_time) == len(pelt_time_temp_threshold) + 1 # check if pelt wait time matches threshold
 
@@ -1473,7 +1473,8 @@ for sample_idx in range(len(sample_names)):
             with open(movie_name, "rb") as f:
                 data = f.read() # reads the movie file as bytes
 
-            timestamp_list.append(int(re.search(r'_timestamp_(\d+)_', file).group(1))) 
+            if timelapse==1:
+                timestamp_list.append(int(re.search(r'_timestamp_(\d+)_', file).group(1))) 
             
             frames=list(iterate_frames(data)) # creates a list of all frames from data
             n_frames=len(frames) # finds the number of frames
