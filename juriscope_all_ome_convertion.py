@@ -10,6 +10,8 @@ from tifffile import TiffWriter
 from datetime import datetime, timedelta, timezone
 from ome_types.model import OME, Image, Pixels, Channel, Plane
 import sys
+import signal
+import subprocess
 
 
 
@@ -1534,3 +1536,22 @@ for sample_idx in range(len(sample_names)):
                     
 
 print('Conversion to tiff complete')
+
+#closes temika
+
+import subprocess
+import os
+import signal
+
+# 1️⃣ Find the PID(s) of temika using pgrep
+result = subprocess.run(
+    ["pgrep", "-o", "temika"],
+    capture_output=True,
+    text=True
+)
+
+pid_str = result.stdout.strip()
+if pid_str:
+    pid = int(pid_str)
+    os.kill(pid, signal.SIGINT)
+
