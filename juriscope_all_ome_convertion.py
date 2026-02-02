@@ -18,18 +18,19 @@ import sys
 load_previous_positions=0 # 1 to load previous positions you have already selected
                           # 0 to choose new positions for samples
 
-main_folder='/home/ahm50/data/27_1_26/' # Give the file directory you are saving to
+main_folder='/home/ahm50/data/30_1_26/' # Give the file directory you are saving to
 
 objective=40 # Set either 20 or 40 for which objective is being used
 
-samples=2 #How many wells/capillaries do you have
 
 sample_names=['invertase_600_mgml']
+
+samples=len(sample_names) #How many wells/capillaries do you have
 
 z_stack=1# Say if a z stack is being used; 1=yes, 0= not
 timelapse=1 # say if you want time lapse on; 1=yes, 0= not
 
-auto_focus=0 # Say if you want autofocus ON or OFF
+auto_focus=1 # Say if you want autofocus ON or OFF
 
 
 z_c_order='zc'  # zc -  In single z-stack, does all channels then moves to next z_stack -- should be faster
@@ -84,7 +85,7 @@ pelt_wait_time=[5] # wait time for peltier in minutes.
 
 
 illumination=[0x01, 0x20,0x40] # change depending on which channel is being used
-illum_expose=[20000,10000,499997] # change depending on exposure time for each channel
+illum_expose=[20000,100000,499997] # change depending on exposure time for each channel
 laser_pwr=[1,0.3,1] # change depending on the laser power wanted, between 0 and 1
 
 
