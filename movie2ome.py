@@ -19,13 +19,15 @@ make_frame_mapping=1
 load_previous_positions=1 # 1 to load previous positions you have already selected
                           # 0 to choose new positions for samples
 
-main_folder='/home/ahm50/data/19_1_26/' # Give the file directory you are saving to
+
+main_folder='/home/ahm50/data/6_2_26/' # Give the file directory you are saving to
 
 objective=40 # Set either 20 or 40 for which objective is being used
 
-samples=2 #How many wells/capillaries do you have
 
-sample_names=['Melting_GUV_no_anch','Melting_GUV_2uM_anch']
+sample_names=['invertase_300_mgml_1uM_anch','invertase_300_mgml_2uM_anch']
+
+samples=len(sample_names) #How many wells/capillaries do you have
 
 z_stack=1# Say if a z stack is being used; 1=yes, 0= not
 timelapse=1 # say if you want time lapse on; 1=yes, 0= not
@@ -38,12 +40,12 @@ z_c_order='zc'  # zc -  In single z-stack, does all channels then moves to next 
 
 ##################################### time range
 
-interval=np.array([5]) # interval time between imaging cycles in minutes
+interval=np.array([2.5]) # interval time between imaging cycles in minutes
 
 
-interval_time=np.array([1500]) #  total time for each interval, same order as interval
+interval_time=np.array([4]) #  total time for each interval, same order as interval
 
-#interval_time=interval_time*60 # This is for interval_time in hrs.
+interval_time=interval_time*60 # This is for interval_time in hrs.
                                # If using in minutes, comment out.
 
 ## Further intervals can be added
@@ -61,7 +63,7 @@ heating_time = "0:0:1" # h:m:s
 
 #### Peltier temperature variables
 
-peltier=1 # say if you want peltier on; 1=yes, 0=not
+peltier=0 # say if you want peltier on; 1=yes, 0=not
 
 pelt_start_temp=25
 pelt_end_temp=55
@@ -84,19 +86,17 @@ pelt_wait_time=[5] # wait time for peltier in minutes.
 ################################## Illumination 
 
 
-illumination=[0x20,0x40] # change depending on which channel is being used
-illum_expose=[10000,499997] # change depending on exposure time for each channel
-laser_pwr=[0.3,1] # change depending on the laser power wanted, between 0 and 1
+illumination=[0x01, 0x20,0x40] # change depending on which channel is being used
+illum_expose=[20000,100000,499997] # change depending on exposure time for each channel
+laser_pwr=[1,0.3,1] # change depending on the laser power wanted, between 0 and 1
 
 
 # remember to not have a comma for the last one
 user_channel_colors = {
-    #0: "#FFFFFFFF", # white for greyscale
-    0: "#00FFFFFF",
-    1: "#FFFF00FF"
-    
-    #3: "#FF0000FF"    
-}
+    0: "#FFFFFFFF", # white for greyscale
+    1: "#00FFFFFF",
+    2: "#FFFF00FF"
+    }
 ###################################### END OF USER SET PARAMETERS #################################################
 timestamp=[]
 
@@ -107,71 +107,72 @@ if load_previous_positions==1:
         number, positions = pickle.load(f)
         print("Loaded data:", number, positions)
 
-### Create dictionary to find what each frame in each movie corresponds to
-for sample_idx in range(len(sample_names)):
-    # Build frame mapping
-    frame_sequence = []
-    frame_seq_id = 1
+if make_frame_mapping==1:
+    ### Create dictionary to find what each frame in each movie corresponds to
+    for sample_idx in range(len(sample_names)):
+        # Build frame mapping
+        frame_sequence = []
+        frame_seq_id = 1
 
-    if z_stack == 1:
+        if z_stack == 1:
 
-        if z_c_order == 'zc':
+            if z_c_order == 'zc':
 
-            
-                for num in range(1, number[sample_idx] + 1):
-                    for zi in np.arange(-z_range,z_range +z_step,z_step):
+                
+                    for num in range(1, number[sample_idx] + 1):
+                        for zi in np.arange(-z_range,z_range +z_step,z_step):
+                            for il in range(len(illumination)):
+                                frame_sequence.append({
+                                    "frame": frame_seq_id,
+                                    "sample": sample_names[sample_idx],
+                                    "number": num,
+                                    "z": float(zi),
+                                    "illum_wavelength": illumination[il],
+                                    "illum_exposure_time": illum_expose[il],
+                                    "illum_pwr": laser_pwr[il]
+                                })
+                                frame_seq_id += 1
+
+            elif z_c_order == 'cz':
+
+
+                    for num in range(1, number[sample_idx] + 1):
                         for il in range(len(illumination)):
-                            frame_sequence.append({
-                                "frame": frame_seq_id,
-                                "sample": sample_names[sample_idx],
-                                "number": num,
-                                "z": float(zi),
-                                "illum_wavelength": illumination[il],
-                                "illum_exposure_time": illum_expose[il],
-                                "illum_pwr": laser_pwr[il]
-                            })
-                            frame_seq_id += 1
+                            for zi in np.arange(-z_range,z_range +z_step,z_step):                
+                                frame_sequence.append({
+                                    "frame": frame_seq_id,
+                                    "sample": sample_names[sample_idx],
+                                    "number": num,
+                                    "z": float(zi),
+                                    "illum_wavelength": illumination[il],
+                                    "illum_exposure_time": illum_expose[il],
+                                    "illum_pwr": laser_pwr[il]
+                                })
 
-        elif z_c_order == 'cz':
+                                frame_seq_id += 1
+        elif z_stack == 0:
+            for num in range(1, number[sample_idx] + 1):
+                for il in range(len(illumination)):              
+                    frame_sequence.append({
+                        "frame": frame_seq_id,
+                        "sample": sample_names[sample_idx],
+                        "number": num,
+                        "z": 1.0,
+                        "illum_wavelength": illumination[il],
+                        "illum_exposure_time": illum_expose[il],
+                        "illum_pwr": laser_pwr[il]
+                    })
 
+                    frame_seq_id += 1
 
-                for num in range(1, number[sample_idx] + 1):
-                    for il in range(len(illumination)):
-                        for zi in np.arange(-z_range,z_range +z_step,z_step):                
-                            frame_sequence.append({
-                                "frame": frame_seq_id,
-                                "sample": sample_names[sample_idx],
-                                "number": num,
-                                "z": float(zi),
-                                "illum_wavelength": illumination[il],
-                                "illum_exposure_time": illum_expose[il],
-                                "illum_pwr": laser_pwr[il]
-                            })
+        csv_file = f"{main_folder}/frame_mapping_{sample_idx}.csv"
+        with open(csv_file, mode="w", newline="") as file:
+            writer = csv.DictWriter(file, fieldnames=["frame", "sample", "number", "z", "illum_wavelength", "illum_exposure_time", "illum_pwr"])
+            writer.writeheader()
+            for f in frame_sequence:
+                writer.writerow(f)
 
-                            frame_seq_id += 1
-    elif z_stack == 0:
-        for num in range(1, number[sample_idx] + 1):
-            for il in range(len(illumination)):              
-                frame_sequence.append({
-                    "frame": frame_seq_id,
-                    "sample": sample_names[sample_idx],
-                    "number": num,
-                    "z": 1.0,
-                    "illum_wavelength": illumination[il],
-                    "illum_exposure_time": illum_expose[il],
-                    "illum_pwr": laser_pwr[il]
-                })
-
-                frame_seq_id += 1
-
-    csv_file = f"{main_folder}/frame_mapping_{sample_idx}.csv"
-    with open(csv_file, mode="w", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=["frame", "sample", "number", "z", "illum_wavelength", "illum_exposure_time", "illum_pwr"])
-        writer.writeheader()
-        for f in frame_sequence:
-            writer.writerow(f)
-
-    print(f"Frame mapping export complete")
+        print(f"Frame mapping export complete")
 
 with open(f"{main_folder}/timestamp.csv", mode="w", newline="") as file:
     writer = csv.writer(file)
@@ -563,10 +564,10 @@ for sample_idx in range(len(sample_names)):
             with open(movie_name, "rb") as f:
                 data = f.read() # reads the movie file as bytes
 
-            timestamp_list.append(int(re.search(r'_timestamp_(\d+)_', file).group(1))) 
+            if timelapse==1:
+                timestamp_list.append(int(re.search(r'_timestamp_(\d+)_', file).group(1))) 
             
             frames=list(iterate_frames(data)) # creates a list of all frames from data
-
             n_frames=len(frames) # finds the number of frames
 
             if n_frames == 0:
@@ -584,31 +585,46 @@ for sample_idx in range(len(sample_names)):
                 
                 for zi,z in enumerate(z_per_c): # for number of z_stacks in channel
                     z_dicts=[d for d in c_dicts if d.get('z')==str(z)]
-
+                    
                     frame=set(d.get('frame') for d in z_dicts if 'frame' in d)
                     frame = int(list(frame)[0])
-                    
+
                     if len(all_data[sample_idx]) + 1 == n_frames: # if statement as sometimes 1st frame is incorrect for use
                         frame_idx=frame+1
+
+                        hdr, extra, mv = frames[frame_idx - 1] # indexing for individual frame
+
+                        h , w = hdr["height"] , hdr["width"] # finds the height and width of the frame
+                        stride=hdr["stride"] # difference in bytes between start of 1 row and the next row of pixels
+
+                        arr=np.empty((h, w), dtype=np.uint16) # output image is of the 16 bit type. This initialises the matrix
+                        for r in range(h):
+                            off = r * stride # number of bytes in each row, i.e. total number of bytes in that row
+                            row=np.frombuffer(mv[off : off + w * 2], dtype=np.uint16, count=w) # creates array from buffer of binary data using memory view between off: off + w and reads w number of elements 
+                            if hdr["endianness"] == G_BIG_ENDIAN: # check endianess and make sure it is little endian, i.e. byte order is 12 34 and not 43 21
+                                row = row.byteswap()
+                            arr[r] = row
                     elif len(all_data[sample_idx]) == n_frames:
                         frame_idx=frame
+
+                        hdr, extra, mv = frames[frame_idx - 1] # indexing for individual frame
+
+                        h , w = hdr["height"] , hdr["width"] # finds the height and width of the frame
+                        stride=hdr["stride"] # difference in bytes between start of 1 row and the next row of pixels
+
+                        arr=np.empty((h, w), dtype=np.uint16) # output image is of the 16 bit type. This initialises the matrix
+                        for r in range(h):
+                            off = r * stride # number of bytes in each row, i.e. total number of bytes in that row
+                            row=np.frombuffer(mv[off : off + w * 2], dtype=np.uint16, count=w) # creates array from buffer of binary data using memory view between off: off + w and reads w number of elements 
+                            if hdr["endianness"] == G_BIG_ENDIAN: # check endianess and make sure it is little endian, i.e. byte order is 12 34 and not 43 21
+                                row = row.byteswap()
+                            arr[r] = row
                     else:
-                        raise ValueError("Frames do not match")
+                        arr=np.zeros((h, w), dtype=np.uint16) # Create a blank frame as original frame did not exist
                     
                     ############# Read and store frames in OME-Tiff
                     
-                    hdr, extra, mv = frames[frame_idx - 1] # indexing for individual frame
-
-                    h , w = hdr["height"] , hdr["width"] # finds the height and width of the frame
-                    stride=hdr["stride"] # difference in bytes between start of 1 row and the next row of pixels
-
-                    arr=np.empty((h, w), dtype=np.uint16) # output image is of the 16 bit type. This initialises the matrix
-                    for r in range(h):
-                        off = r * stride # number of bytes in each row, i.e. total number of bytes in that row
-                        row=np.frombuffer(mv[off : off + w * 2], dtype=np.uint16, count=w) # creates array from buffer of binary data using memory view between off: off + w and reads w number of elements 
-                        if hdr["endianness"] == G_BIG_ENDIAN: # check endianess and make sure it is little endian, i.e. byte order is 12 34 and not 43 21
-                            row = row.byteswap()
-                        arr[r] = row
+                    
                     
                     #frame_time=hdr["time_sec"] + hdr["time_nsec"]/1e9
                     #iso_time = datetime.fromtimestamp(frame_time, tz=timezone.utc).isoformat().replace("+00:00", "Z")

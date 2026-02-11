@@ -20,12 +20,12 @@ import subprocess
 load_previous_positions=0 # 1 to load previous positions you have already selected
                           # 0 to choose new positions for samples
 
-main_folder='/home/ahm50/data/30_1_26/' # Give the file directory you are saving to
+main_folder='/home/ahm50/data/6_2_26/' # Give the file directory you are saving to
 
 objective=40 # Set either 20 or 40 for which objective is being used
 
 
-sample_names=['invertase_600_mgml']
+sample_names=['invertase_300_mgml_1uM_anch','invertase_300_mgml_2uM_anch']
 
 samples=len(sample_names) #How many wells/capillaries do you have
 
@@ -1503,25 +1503,37 @@ for sample_idx in range(len(sample_names)):
 
                     if len(all_data[sample_idx]) + 1 == n_frames: # if statement as sometimes 1st frame is incorrect for use
                         frame_idx=frame+1
+
+                        hdr, extra, mv = frames[frame_idx - 1] # indexing for individual frame
+
+                        h , w = hdr["height"] , hdr["width"] # finds the height and width of the frame
+                        stride=hdr["stride"] # difference in bytes between start of 1 row and the next row of pixels
+
+                        arr=np.empty((h, w), dtype=np.uint16) # output image is of the 16 bit type. This initialises the matrix
+                        for r in range(h):
+                            off = r * stride # number of bytes in each row, i.e. total number of bytes in that row
+                            row=np.frombuffer(mv[off : off + w * 2], dtype=np.uint16, count=w) # creates array from buffer of binary data using memory view between off: off + w and reads w number of elements 
+                            if hdr["endianness"] == G_BIG_ENDIAN: # check endianess and make sure it is little endian, i.e. byte order is 12 34 and not 43 21
+                                row = row.byteswap()
+                            arr[r] = row
                     elif len(all_data[sample_idx]) == n_frames:
                         frame_idx=frame
+
+                        hdr, extra, mv = frames[frame_idx - 1] # indexing for individual frame
+
+                        h , w = hdr["height"] , hdr["width"] # finds the height and width of the frame
+                        stride=hdr["stride"] # difference in bytes between start of 1 row and the next row of pixels
+
+                        arr=np.empty((h, w), dtype=np.uint16) # output image is of the 16 bit type. This initialises the matrix
+                        for r in range(h):
+                            off = r * stride # number of bytes in each row, i.e. total number of bytes in that row
+                            row=np.frombuffer(mv[off : off + w * 2], dtype=np.uint16, count=w) # creates array from buffer of binary data using memory view between off: off + w and reads w number of elements 
+                            if hdr["endianness"] == G_BIG_ENDIAN: # check endianess and make sure it is little endian, i.e. byte order is 12 34 and not 43 21
+                                row = row.byteswap()
+                            arr[r] = row
                     else:
-                        raise ValueError("Frames do not match")
+                        arr=np.zeros((h, w), dtype=np.uint16) # Create a blank frame as original frame did not exist
                     
-                    ############# Read and store frames in OME-Tiff
-                    
-                    hdr, extra, mv = frames[frame_idx - 1] # indexing for individual frame
-
-                    h , w = hdr["height"] , hdr["width"] # finds the height and width of the frame
-                    stride=hdr["stride"] # difference in bytes between start of 1 row and the next row of pixels
-
-                    arr=np.empty((h, w), dtype=np.uint16) # output image is of the 16 bit type. This initialises the matrix
-                    for r in range(h):
-                        off = r * stride # number of bytes in each row, i.e. total number of bytes in that row
-                        row=np.frombuffer(mv[off : off + w * 2], dtype=np.uint16, count=w) # creates array from buffer of binary data using memory view between off: off + w and reads w number of elements 
-                        if hdr["endianness"] == G_BIG_ENDIAN: # check endianess and make sure it is little endian, i.e. byte order is 12 34 and not 43 21
-                            row = row.byteswap()
-                        arr[r] = row
                     
                     #frame_time=hdr["time_sec"] + hdr["time_nsec"]/1e9
                     #iso_time = datetime.fromtimestamp(frame_time, tz=timezone.utc).isoformat().replace("+00:00", "Z")
