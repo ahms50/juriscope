@@ -20,12 +20,12 @@ import subprocess
 load_previous_positions=0 # 1 to load previous positions you have already selected
                           # 0 to choose new positions for samples
 
-main_folder='/home/ahm50/data/6_2_26/' # Give the file directory you are saving to
+main_folder='/home/ahm50/data/18_2_26/' # Give the file directory you are saving to
 
 objective=40 # Set either 20 or 40 for which objective is being used
 
 
-sample_names=['invertase_300_mgml_1uM_anch','invertase_300_mgml_2uM_anch']
+sample_names=['invertase_300_mgml_7uM_anch']
 
 samples=len(sample_names) #How many wells/capillaries do you have
 
