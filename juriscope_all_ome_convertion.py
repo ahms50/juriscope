@@ -20,7 +20,9 @@ import subprocess
 load_previous_positions=0 # 1 to load previous positions you have already selected
                           # 0 to choose new positions for samples
 
-main_folder='/home/ahm50/data/18_2_26/' # Give the file directory you are saving to
+close_temika=0 # tells the computer to reset condensor, z and kill temika after imaging
+
+main_folder='/home/ahm50/data/5_3_26/' # Give the file directory you are saving to
 
 objective=40 # Set either 20 or 40 for which objective is being used
 
@@ -1049,7 +1051,8 @@ else:
                 index += number[i]
                 
 
-script_print_move_z_c_reset()
+if close_temika==1:
+    script_print_move_z_c_reset()
 
 
 script_send_command(b"</temika>", False) # ends the temika script
@@ -1549,21 +1552,24 @@ for sample_idx in range(len(sample_names)):
 
 print('Conversion to tiff complete')
 
+
 #closes temika
 
-import subprocess
-import os
-import signal
+if close_temika==1:
 
-# 1️⃣ Find the PID(s) of temika using pgrep
-result = subprocess.run(
-    ["pgrep", "-o", "temika"],
-    capture_output=True,
-    text=True
-)
+    import subprocess
+    import os
+    import signal
 
-pid_str = result.stdout.strip()
-if pid_str:
-    pid = int(pid_str)
-    os.kill(pid, signal.SIGINT)
+    # 1️⃣ Find the PID(s) of temika using pgrep
+    result = subprocess.run(
+        ["pgrep", "-o", "temika"],
+        capture_output=True,
+        text=True
+    )
+
+    pid_str = result.stdout.strip()
+    if pid_str:
+        pid = int(pid_str)
+        os.kill(pid, signal.SIGINT)
 
