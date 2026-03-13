@@ -22,12 +22,12 @@ load_previous_positions=0 # 1 to load previous positions you have already select
 
 close_temika=0 # tells the computer to reset condensor, z and kill temika after imaging
 
-main_folder='/home/ahm50/data/5_3_26/' # Give the file directory you are saving to
+main_folder='/home/ahm50/data/12_3_26/' # Give the file directory you are saving to
 
-objective=40 # Set either 20 or 40 for which objective is being used
+objective=20 # Set either 20 or 40 for which objective is being used
 
 
-sample_names=['invertase_300_mgml_7uM_anch']
+sample_names=['invertase_200_mgml_3uM_anch']
 
 samples=len(sample_names) #How many wells/capillaries do you have
 
